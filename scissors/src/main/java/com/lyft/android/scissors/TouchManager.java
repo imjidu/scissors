@@ -17,7 +17,7 @@ package com.lyft.android.scissors;
 
 import android.annotation.TargetApi;
 import android.graphics.Matrix;
-import android.graphics.Rect;
+import android.graphics.Point;
 import android.os.Build;
 import android.view.MotionEvent;
 
@@ -31,7 +31,7 @@ class TouchManager {
 
     private float minimumScale;
     private float maximumScale;
-    private Rect imageBounds;
+    private Point imageCenter;
     private float aspectRatio;
     private int viewportWidth;
     private int viewportHeight;
@@ -84,7 +84,7 @@ class TouchManager {
 
     public void resetFor(int bitmapWidth, int bitmapHeight, int availableWidth, int availableHeight) {
         aspectRatio = cropViewConfig.getViewportRatio();
-        imageBounds = new Rect(0, 0, availableWidth / 2, availableHeight / 2);
+        imageCenter = new Point(availableWidth / 2, availableHeight / 2);
         setViewport(bitmapWidth, bitmapHeight, availableWidth, availableHeight);
 
         this.bitmapWidth = bitmapWidth;
@@ -103,6 +103,14 @@ class TouchManager {
 
     public int getViewportHeight() {
         return viewportHeight;
+    }
+
+    public int getScaledBitmapWidth() {
+        return (int) (bitmapWidth * scale);
+    }
+
+    public int getScaledBitmapHeight() {
+        return (int) (bitmapHeight * scale);
     }
 
     public float getAspectRatio() {
@@ -130,12 +138,12 @@ class TouchManager {
     }
 
     private void ensureInsideViewport() {
-        if (imageBounds == null) {
+        if (imageCenter == null) {
             return;
         }
 
         float newY = position.getY();
-        int bottom = imageBounds.bottom;
+        int bottom = imageCenter.y;
 
 
         if (bottom - newY >= verticalLimit) {
@@ -145,7 +153,7 @@ class TouchManager {
         }
 
         float newX = position.getX();
-        int right = imageBounds.right;
+        int right = imageCenter.x;
         if (newX <= right - horizontalLimit) {
             newX = right - horizontalLimit;
         } else if (newX > right + horizontalLimit) {
@@ -205,13 +213,13 @@ class TouchManager {
     }
 
     private void resetPosition() {
-        position.set(imageBounds.right, imageBounds.bottom);
+        position.set(imageCenter.x, imageCenter.y);
     }
 
     private void setMinimumScale() {
         final float fw = (float) viewportWidth / bitmapWidth;
         final float fh = (float) viewportHeight / bitmapHeight;
-        minimumScale = Math.max(fw, fh);
+        minimumScale = Math.min(fw, fh);
         scale = Math.max(scale, minimumScale);
     }
 
@@ -262,7 +270,7 @@ class TouchManager {
     }
 
     private static int computeLimit(int bitmapSize, int viewportSize) {
-        return (bitmapSize - viewportSize) / 2;
+        return bitmapSize < viewportSize ? 0 : (bitmapSize - viewportSize) / 2;
     }
 
     private static TouchPoint vector(TouchPoint a, TouchPoint b) {

@@ -222,12 +222,17 @@ public class CropView extends ImageView {
         final Bitmap.Config config = srcConfig == null ? Bitmap.Config.ARGB_8888 : srcConfig;
         final int viewportHeight = touchManager.getViewportHeight();
         final int viewportWidth = touchManager.getViewportWidth();
+        final int bitmapHeight = touchManager.getScaledBitmapHeight();
+        final int bitmapWidth = touchManager.getScaledBitmapWidth();
 
-        final Bitmap dst = Bitmap.createBitmap(viewportWidth, viewportHeight, config);
+        final int height = Math.min(viewportHeight, bitmapHeight);
+        final int width = Math.min(viewportWidth, bitmapWidth);
+
+        final Bitmap dst = Bitmap.createBitmap(width, height, config);
 
         Canvas canvas = new Canvas(dst);
-        final int left = (getRight() - viewportWidth) / 2;
-        final int top = (getBottom() - viewportHeight) / 2;
+        final int left = (getRight() - width) / 2;
+        final int top = (getBottom() - height) / 2;
         canvas.translate(-left, -top);
 
         drawBitmap(canvas);
