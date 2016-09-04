@@ -26,6 +26,8 @@ import android.view.ViewTreeObserver;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
 class CropViewExtensions {
@@ -55,6 +57,7 @@ class CropViewExtensions {
 
         private final CropView cropView;
         private BitmapLoader bitmapLoader;
+        private Class<? extends BitmapLoader> bitmapLoaderClass;
 
         LoadRequest(CropView cropView) {
             Utils.checkNotNull(cropView, "cropView == null");
@@ -69,6 +72,17 @@ class CropViewExtensions {
          */
         public LoadRequest using(@Nullable BitmapLoader bitmapLoader) {
             this.bitmapLoader = bitmapLoader;
+            return this;
+        }
+
+        /**
+         * Load a {@link Bitmap} using given {@link BitmapLoader}, you must call {@link LoadRequest#load(Object)} afterwards.
+         *
+         * @param bitmapLoaderClass {@link BitmapLoader} to use
+         * @return current request for chaining, you should call {@link #load(Object)} afterwards.
+         */
+        public LoadRequest using(@Nullable Class<? extends BitmapLoader> bitmapLoaderClass) {
+            this.bitmapLoaderClass = bitmapLoaderClass;
             return this;
         }
 
@@ -88,7 +102,12 @@ class CropViewExtensions {
 
         void performLoad(Object model) {
             if (bitmapLoader == null) {
-                bitmapLoader = resolveBitmapLoader(cropView);
+                if (bitmapLoaderClass != null) {
+                    bitmapLoader = createBitmapLoader(cropView, bitmapLoaderClass);
+                }
+                if (bitmapLoader == null) {
+                    bitmapLoader = resolveBitmapLoader(cropView);
+                }
             }
             bitmapLoader.load(model, cropView);
         }
@@ -185,6 +204,15 @@ class CropViewExtensions {
             return UILBitmapLoader.createUsing(cropView);
         }
         throw new IllegalStateException("You must provide a BitmapLoader.");
+    }
+
+    static BitmapLoader createBitmapLoader(CropView cropView, Class<? extends BitmapLoader> loaderClass) {
+        try {
+            Method method = loaderClass.getMethod("createUsing", CropView.class);
+            return (BitmapLoader) method.invoke(null, cropView);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     static boolean canHasClass(String className) {
