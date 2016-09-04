@@ -307,6 +307,17 @@ public class CropView extends ImageView {
         }
 
         /**
+         * Load a {@link Bitmap} using given {@link BitmapLoader}, you must call {@link LoadRequest#load(Object)} afterwards.
+         *
+         * @param bitmapLoaderClass {@link BitmapLoader} used to load desired {@link Bitmap}
+         * @see PicassoBitmapLoader
+         * @see GlideBitmapLoader
+         */
+        public LoadRequest using(@Nullable Class<? extends BitmapLoader> bitmapLoaderClass) {
+            return new LoadRequest(cropView).using(bitmapLoaderClass);
+        }
+
+        /**
          * Perform an asynchronous crop request.
          *
          * @return {@link CropRequest} used to chain a configure cropping request, you must call either one of:
