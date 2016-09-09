@@ -220,7 +220,7 @@ class TouchManager {
         final float fw = (float) viewportWidth / bitmapWidth;
         final float fh = (float) viewportHeight / bitmapHeight;
         minimumScale = Math.min(fw, fh);
-        scale = Math.max(scale, minimumScale);
+        scale = Math.max(scale, Math.max(fw, fh));
     }
 
     private void updateScale() {
